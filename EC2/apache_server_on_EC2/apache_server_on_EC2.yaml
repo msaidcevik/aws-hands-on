@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |
+  This template launches apache-server on EC2.
+
+Parameters:
+  KeyName:
+    Description: The EC2 Key Pair to allow SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+
+
+Resources:
+  myInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: "ami-026b57f3c383c2eec"
+      InstanceType: "t2.micro"
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - !Ref mySg  
+      Tags:
+        - Key: Name
+          Value: apache-server
+      UserData: 
+        Fn::Base64:
+          !Sub |
+            #! /bin/bash
+            yum update -y 
+            yum install httpd -y
+            systemctl start httpd
+            systemctl enable httpd
+
+  mySg:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: "add SSH and HTTP"
+      GroupName: "apache-sg"
+      SecurityGroupIngress: 
+      - CidrIp: 0.0.0.0/0
+        FromPort: 80
+        IpProtocol: tcp
+        ToPort: 80
+
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: tcp
+        ToPort: 22  
+      Tags: 
+        - Key: Name
+          Value: apache-sg    
